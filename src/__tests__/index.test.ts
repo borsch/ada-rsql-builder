@@ -1,5 +1,5 @@
-import { requestToRsql } from '../index';
-import { FilterType } from 'angular-datatable-advanced';
+import { FilterProcessor, requestToRsql } from '../index';
+import { ColumnWithFilter, FilterType } from 'angular-datatable-advanced';
 
 test('Should return null for empty array', () => {
   expect(requestToRsql([])).toBeNull();
@@ -97,3 +97,43 @@ test('Should build filter for single column with different fitler types', () => 
     expect(requestToRsql([test.filter])).toBe(test.expected);
   });
 });
+
+test('Should rename properties', () => {
+  const columns: ColumnWithFilter[] = [
+    {
+      column: {columnKey: 'key1', columnName: 'Key1'},
+      filter: {type: FilterType.EQUALS, value1: 'value1'}
+    },
+    {
+      column: {columnKey: 'shouldBeReplaced', columnName: 'Key2'},
+      filter: {type: FilterType.EQUALS, value1: 'value2'}
+    }
+  ];
+  const filterProcessor: Map<string, FilterProcessor> = new Map<string, FilterProcessor>([
+    [
+      'shouldBeReplaced', { newKey: 'key2' }
+    ]
+  ]);
+
+  expect(requestToRsql(columns, filterProcessor)).toBe('key1==value1;key2==value2');
+});
+
+test('Should replace value', () => {
+  const columns: ColumnWithFilter[] = [
+    {
+      column: {columnKey: 'key1', columnName: 'Key1'},
+      filter: {type: FilterType.EQUALS, value1: 'value1'}
+    },
+    {
+      column: {columnKey: 'key2', columnName: 'Key2'},
+      filter: {type: FilterType.EQUALS, value1: 'value2'}
+    }
+  ];
+  const filterProcessor: Map<string, FilterProcessor> = new Map<string, FilterProcessor>([
+    [
+      'key2', { valueProcessor: oldValue => oldValue + '_updated' }
+    ]
+  ]);
+
+  expect(requestToRsql(columns, filterProcessor)).toBe('key1==value1;key2==value2_updated');
+})
