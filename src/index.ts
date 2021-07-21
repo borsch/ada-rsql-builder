@@ -28,7 +28,7 @@ export function requestToRsql(filters: ColumnWithFilter[], filterProcessor: Map<
           value2: processValue(processor, col.filter.value2),
         };
       })
-      .map((filter) => filterToRsql(filter))
+      .map((filter) => filterToRsqlFromObject(filter))
       .filter((value) => !!value)
       .join(';') || null
   );
@@ -38,33 +38,38 @@ function processValue(filterProcessor: FilterProcessor | undefined, value: any) 
   return filterProcessor && filterProcessor.valueProcessor ? filterProcessor.valueProcessor(value) : value;
 }
 
-function filterToRsql(filter: FieldFilter) {
-  switch (filter.type) {
+function filterToRsqlFromObject(filter: FieldFilter): string | null {
+  return filterToRsql(filter.type, filter.key, filter.value1, filter.value2);
+}
+
+export function filterToRsql(filterType: FilterType | undefined, key: string, value1: any, value2?: any): string | null {
+  switch (filterType) {
     case FilterType.EQUALS:
-      return `${filter.key}==${filter.value1}`;
+      return `${key}==${value1}`;
     case FilterType.NOT_EQUALS:
-      return `${filter.key}!=${filter.value1}`;
+      return `${key}!=${value1}`;
     case FilterType.CONTAINS:
-      return `${filter.key}==*${filter.value1}*`;
+      return `${key}==*${value1}*`;
     case FilterType.STARTS_WITH:
-      return `${filter.key}==${filter.value1}*`;
+      return `${key}==${value1}*`;
     case FilterType.ENDS_WITH:
-      return `${filter.key}==*${filter.value1}`;
+      return `${key}==*${value1}`;
     case FilterType.GREATER_THAN:
-      return `${filter.key}>${filter.value1}`;
+      return `${key}>${value1}`;
     case FilterType.GREATER_THAN_OR_EQUALS:
-      return `${filter.key}>=${filter.value1}`;
+      return `${key}>=${value1}`;
     case FilterType.LESS_THAN:
-      return `${filter.key}<${filter.value1}`;
+      return `${key}<${value1}`;
     case FilterType.LESS_THAN_OR_EQUALS:
-      return `${filter.key}<=${filter.value1}`;
+      return `${key}<=${value1}`;
     case FilterType.RANGE:
-      return `${filter.key}>=${filter.value1};${filter.key}<=${filter.value2}`;
+      return `${key}>=${value1};${key}<=${value2}`;
     case FilterType.IN:
-      return hasLength(filter.value1) ? `${filter.key}=in=(${toCommaSeparateList(filter.value1)})` : null;
+      return hasLength(value1) ? `${key}=in=(${toCommaSeparateList(value1)})` : null;
     case FilterType.NIN:
-      return hasLength(filter.value1) ? `${filter.key}=out=(${toCommaSeparateList(filter.value1)})` : null;
+      return hasLength(value1) ? `${key}=out=(${toCommaSeparateList(value1)})` : null;
   }
+  return null;
 }
 
 function hasLength(array: any) {
