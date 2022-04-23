@@ -53,6 +53,6 @@
     "lib/**/*"
   ],
   "dependencies": {
-    "angular-datatable-advanced": "^0.3.1"
+    "angular-datatable-advanced": "^0.4.0"
   }
 }
